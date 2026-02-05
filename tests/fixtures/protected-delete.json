@@ -1,0 +1,23 @@
+{
+  "format_version": "1.2",
+  "planned_values": {},
+  "resource_changes": [
+    {
+      "address": "aws_dynamodb_table.orders",
+      "mode": "managed",
+      "type": "aws_dynamodb_table",
+      "change": {
+        "actions": [
+          "delete"
+        ],
+        "before": {
+          "tags": {
+            "owner": "platform"
+          }
+        },
+        "after": null,
+        "after_unknown": {}
+      }
+    }
+  ]
+}
