@@ -1,0 +1,34 @@
+name: Review OpenTofu plan
+description: Evaluate a private saved-plan JSON document and produce a value-free review report.
+inputs:
+  plan:
+    description: Path to private plan JSON on this runner
+    required: true
+  config:
+    description: Path to release-kit.toml
+    required: true
+  output-directory:
+    description: Report directory
+    default: .artifacts/review
+runs:
+  using: composite
+  steps:
+    - name: Install this pinned toolkit revision
+      shell: bash
+      env:
+        KIT_ROOT: ${{ github.action_path }}/../../..
+      run: |
+        python -m pip install "$KIT_ROOT"
+        python "$KIT_ROOT/scripts/install_tools.py" --directory "$RUNNER_TEMP/trk-tools"
+        echo "$RUNNER_TEMP/trk-tools" >> "$GITHUB_PATH"
+    - name: Review plan
+      shell: bash
+      env:
+        PLAN: ${{ inputs.plan }}
+        CONFIG: ${{ inputs.config }}
+        REPORT_DIR: ${{ inputs.output-directory }}
+      run: |
+        umask 077
+        mkdir -p "$REPORT_DIR"
+        python -m tofu_release_kit report --plan "$PLAN" --config "$CONFIG" \
+          --output "$REPORT_DIR/review.json" --markdown "$REPORT_DIR/review.md"
