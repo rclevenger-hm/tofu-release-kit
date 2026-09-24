@@ -1,0 +1,31 @@
+name: Import documented initial history
+
+on:
+  push:
+    branches: [main]
+    paths: ['history/import.json']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: initial-history-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    if: github.repository == 'rclevenger-hm/tofu-release-kit' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify and attach the documented import
+        run: |
+          git config user.name 'Roger Clevenger'
+          git config user.email '70983614+rclevenger-hm@users.noreply.github.com'
+          python scripts/import_history.py --push
