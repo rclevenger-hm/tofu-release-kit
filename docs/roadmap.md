@@ -15,6 +15,10 @@ evidence. A green mocked test is not proof of a successful AWS deployment.
 
 ## 0.2: Portable reference workloads
 
+Tracking: [live AWS validation #7](https://github.com/rclevenger-hm/tofu-release-kit/issues/7),
+[AWS/Azure containers #8](https://github.com/rclevenger-hm/tofu-release-kit/issues/8),
+[Spacelift integration #9](https://github.com/rclevenger-hm/tofu-release-kit/issues/9).
+
 1. Deploy one containerized service through AWS ECS and Azure Container Apps.
    Share input/output contracts while retaining explicit cloud-specific modules.
    Add identity, networking, logs, scoped permissions, and a teardown procedure.
@@ -23,6 +27,8 @@ evidence. A green mocked test is not proof of a successful AWS deployment.
 4. Add AWS live integration evidence and a reviewed least-privilege deploy-role policy.
 
 ## 0.3: Recovery and change operations
+
+Tracking: [drift and recovery matrix #10](https://github.com/rclevenger-hm/tofu-release-kit/issues/10).
 
 1. Add scheduled drift reporting with correct 0/1/2 exit handling and no automatic
    reconciliation. Clearly scope it to resources managed by the selected state.

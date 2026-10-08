@@ -16,7 +16,11 @@ source snapshot is therefore published using real connector timestamps, with the
 dated local history preserved in `history/initial-import.bundle` and its checksum
 in `history/import.json`.
 
-From a clean authenticated clone on `main`, run:
+The one-time **Import documented initial history** workflow performs a normal merge
+when the bundle manifest is published. It uses the repository's standard Actions
+token; it does not expose credentials or force-push. Its actual execution time is
+recorded in GitHub Actions and the merge commit. If a local import is preferred,
+from a clean authenticated clone on `main`, run:
 
 ```sh
 python scripts/import_history.py --push
