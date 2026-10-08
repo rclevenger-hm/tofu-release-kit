@@ -1,0 +1,12 @@
+.git
+.venv
+.artifacts
+.tools
+**/.terraform
+**/*.tfstate*
+**/*.tfvars
+**/__pycache__
+**/*.egg-info
+dist
+build
+history

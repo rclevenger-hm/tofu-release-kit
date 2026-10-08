@@ -1,0 +1,20 @@
+name: Bug report
+description: Report a reproducible toolkit failure without sensitive infrastructure data.
+body:
+  - type: textarea
+    attributes:
+      label: Versions and environment
+      description: Toolkit, Python, OPA, OpenTofu, OS, and runner type.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction
+      description: Use synthetic plans and resource names. Never attach real state, raw plans, or secrets.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected and observed result
+    validations:
+      required: true
