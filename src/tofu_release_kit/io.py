@@ -12,6 +12,26 @@ class KitError(ValueError):
     """An actionable error safe to display without input contents."""
 
 
+def validate_output_paths(inputs, outputs):
+    """Reject accidental file aliases before work starts, without locking paths."""
+    try:
+        protected = [Path(path).resolve() for path in inputs]
+        for path in outputs:
+            target = Path(path).resolve()
+            for other in protected:
+                try:
+                    aliases = target == other or target.samefile(other)
+                except FileNotFoundError:
+                    aliases = False
+                if aliases:
+                    raise KitError(
+                        "Output paths must be distinct from input files and each other"
+                    )
+            protected.append(target)
+    except (OSError, RuntimeError) as exc:
+        raise KitError("Cannot resolve input and output paths") from exc
+
+
 def read_json(path):
     try:
         with Path(path).open("rb") as stream:

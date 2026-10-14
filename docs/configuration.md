@@ -59,7 +59,15 @@ Run `tofu-release-kit COMMAND --help` for complete arguments.
 | report | Plan, config, apply status, optional verification | Deployment JSON and optional Markdown |
 
 All commands require `--output`. Existing files at that destination are replaced
-atomically with private permissions. Keep raw inputs outside version control.
+atomically with private permissions. Output paths must be distinct from every
+input file and, for `report`, `--output` and `--markdown` must also be distinct.
+The CLI rejects matching paths, normalized/symlink aliases, and existing hardlink
+aliases with exit code 2 before reading inputs, running checks, or writing either
+output. Choose separate report filenames; do not reuse a saved plan, configuration,
+lockfile, context, manifest, outputs, or verification input path. This preflight
+prevents accidental collisions; it does not lock paths or protect against another
+process changing files or links after the check. Use a private working directory
+without concurrent writers. Keep raw inputs outside version control.
 Plan input supports JSON format major version 1; unknown actions and incomplete
 or deferred plans fail closed. The maximum JSON file size is 16 MiB.
 

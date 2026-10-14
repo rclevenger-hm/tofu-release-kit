@@ -7,7 +7,7 @@ import sys
 from . import __version__
 from .binding import bind, check_binding
 from .config import load_config
-from .io import KitError, read_json, write_json, write_text
+from .io import KitError, read_json, validate_output_paths, write_json, write_text
 from .plan import summarize
 from .policy import evaluate
 from .report import deployment_report, markdown
@@ -63,6 +63,23 @@ def parser():
 
 
 def run(args):
+    inputs = [
+        path
+        for name in (
+            "config",
+            "plan",
+            "lockfile",
+            "context",
+            "manifest",
+            "outputs",
+            "verification",
+        )
+        if (path := getattr(args, name, None)) is not None
+    ]
+    outputs = [args.output]
+    if getattr(args, "markdown", None) is not None:
+        outputs.append(args.markdown)
+    validate_output_paths(inputs, outputs)
     if args.command in ("bind", "check-binding"):
         config = load_config(args.config)
         if config["environment"] != args.environment:
