@@ -1,7 +1,8 @@
+import copy
 import json
 import unittest
 
-from helpers import plan
+from helpers import plan, recovery_plan
 
 from tofu_release_kit.io import KitError
 from tofu_release_kit.plan import summarize
@@ -43,6 +44,58 @@ class PlanTests(unittest.TestCase):
         data["resource_changes"] *= 2
         with self.assertRaises(KitError):
             summarize(data)
+
+    def test_current_and_deposed_objects_share_an_address(self):
+        result = summarize(recovery_plan())
+        self.assertEqual(result["counts"], {"delete": 1, "unchanged": 1})
+        self.assertEqual(
+            result["resources"],
+            [
+                {
+                    "address": "aws_dynamodb_table.orders",
+                    "type": "aws_dynamodb_table",
+                    "action": "delete",
+                    "deposed": "deadbeef",
+                }
+            ],
+        )
+        self.assertNotIn("DO_NOT_PUBLISH", json.dumps(result))
+
+    def test_multiple_deposed_objects_are_distinct_and_sorted(self):
+        data = recovery_plan()
+        data["resource_changes"][0]["change"]["actions"] = ["update"]
+        other = copy.deepcopy(data["resource_changes"][1])
+        # Deposed keys are opaque, not a fixed-length hexadecimal contract.
+        other["deposed"] = "another-object"
+        data["resource_changes"].append(other)
+        expected = summarize(data)
+        data["resource_changes"].reverse()
+        self.assertEqual(summarize(data), expected)
+        self.assertEqual(expected["counts"], {"delete": 2, "update": 1})
+        self.assertEqual(
+            [r.get("deposed") for r in expected["resources"]],
+            [None, "another-object", "deadbeef"],
+        )
+
+    def test_duplicate_deposed_object_rejected(self):
+        data = recovery_plan()
+        data["resource_changes"].append(copy.deepcopy(data["resource_changes"][1]))
+        with self.assertRaises(KitError):
+            summarize(data)
+
+    def test_deposed_key_may_be_reused_at_another_address(self):
+        data = recovery_plan()
+        other = copy.deepcopy(data["resource_changes"][1])
+        other["address"] = "aws_dynamodb_table.other"
+        data["resource_changes"].append(other)
+        self.assertEqual(summarize(data)["counts"], {"delete": 2, "unchanged": 1})
+
+    def test_malformed_deposed_metadata_rejected(self):
+        for value in (None, "", 0, True, [], {}, "x" * 1025):
+            with self.subTest(value=value), self.assertRaises(KitError):
+                data = recovery_plan()
+                data["resource_changes"][1]["deposed"] = value
+                summarize(data)
 
     def test_empty_plan_valid(self):
         self.assertEqual(

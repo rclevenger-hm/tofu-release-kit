@@ -71,6 +71,15 @@ without concurrent writers. Keep raw inputs outside version control.
 Plan input supports JSON format major version 1; unknown actions and incomplete
 or deferred plans fail closed. The maximum JSON file size is 16 MiB.
 
+Resource changes are identified by the resource address and optional opaque
+`deposed` key, as specified by the [OpenTofu JSON format](https://opentofu.org/docs/internals/json-format/).
+Recovery plans may include the current object and multiple leftover replacement
+objects at the same address. Summaries retain `deposed` only for those objects,
+and Markdown labels them explicitly. Counts describe object actions, not unique
+addresses. Duplicate object identities and invalid deposed metadata fail closed.
+Protected-resource policy still covers every object at the protected address;
+an old object's deletion is not exempt. Resource attribute values remain omitted.
+
 `--context` on bind/check-binding optionally binds a file describing backend and
 account inputs. Use byte-identical canonical JSON for repeatable hashes. It is
 mandatory in the supplied AWS workflow. Binding timestamps are real execution

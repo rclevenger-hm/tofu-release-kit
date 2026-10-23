@@ -4,7 +4,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from helpers import config, plan
+from helpers import config, plan, recovery_plan
 
 from tofu_release_kit.io import KitError
 from tofu_release_kit.policy import evaluate
@@ -43,6 +43,20 @@ class LivePolicyTests(unittest.TestCase):
         decision = evaluate(plan(["create", "delete"]), config())
         self.assertFalse(decision["allowed"])
         self.assertEqual(decision["findings"][0]["rule"], "protected-resource")
+
+    def test_protected_deposed_deletion_still_blocked(self):
+        decision = evaluate(recovery_plan(), config())
+        self.assertFalse(decision["allowed"])
+        self.assertEqual(len(decision["findings"]), 1)
+        self.assertEqual(decision["findings"][0]["rule"], "protected-resource")
+        self.assertEqual(
+            decision["findings"][0]["address"], "aws_dynamodb_table.orders"
+        )
+
+    def test_unprotected_deposed_deletion_can_be_reviewed(self):
+        settings = config()
+        settings["policies"]["protected_resources"] = []
+        self.assertTrue(evaluate(recovery_plan(), settings)["allowed"])
 
     def test_unknown_tags_blocked(self):
         data = plan()

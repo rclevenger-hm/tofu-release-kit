@@ -41,9 +41,18 @@ def validate_plan(plan):
                 or len(resource[field]) > 1024
             ):
                 raise KitError("Resource metadata is missing or invalid")
-        if resource["mode"] not in ("managed", "data") or resource["address"] in seen:
-            raise KitError("Unexpected resource mode or duplicate resource address")
-        seen.add(resource["address"])
+        if "deposed" in resource and (
+            not isinstance(resource["deposed"], str)
+            or not resource["deposed"]
+            or len(resource["deposed"]) > 1024
+        ):
+            raise KitError("Deposed object metadata is invalid")
+        # Interrupted replacements can leave several objects at one address.
+        # OpenTofu identifies each by its address and optional opaque deposed key.
+        identity = (resource["address"], resource.get("deposed"))
+        if resource["mode"] not in ("managed", "data") or identity in seen:
+            raise KitError("Unexpected resource mode or duplicate resource object")
+        seen.add(identity)
         change = resource.get("change")
         if not isinstance(change, dict) or not isinstance(change.get("actions"), list):
             raise KitError("Resource change has no valid action list")
@@ -74,15 +83,18 @@ def summarize(plan):
         kind = ACTIONS[tuple(resource["change"]["actions"])]
         counts[kind] += 1
         if kind != "unchanged":
-            resources.append(
-                {
-                    "address": resource["address"],
-                    "type": resource["type"],
-                    "action": kind,
-                }
-            )
+            metadata = {
+                "address": resource["address"],
+                "type": resource["type"],
+                "action": kind,
+            }
+            if "deposed" in resource:
+                metadata["deposed"] = resource["deposed"]
+            resources.append(metadata)
     return {
         "schema_version": 1,
         "counts": dict(sorted(counts.items())),
-        "resources": sorted(resources, key=lambda x: x["address"]),
+        "resources": sorted(
+            resources, key=lambda x: (x["address"], x.get("deposed", ""))
+        ),
     }

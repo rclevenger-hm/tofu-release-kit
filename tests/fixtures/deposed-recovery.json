@@ -1,0 +1,29 @@
+{
+  "format_version": "1.2",
+  "planned_values": {},
+  "resource_changes": [
+    {
+      "address": "aws_dynamodb_table.orders",
+      "mode": "managed",
+      "type": "aws_dynamodb_table",
+      "change": {
+        "actions": ["no-op"],
+        "before": {"tags": {"owner": "platform", "environment": "test"}},
+        "after": {"tags": {"owner": "platform", "environment": "test"}},
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "aws_dynamodb_table.orders",
+      "mode": "managed",
+      "type": "aws_dynamodb_table",
+      "deposed": "deadbeef",
+      "change": {
+        "actions": ["delete"],
+        "before": {"id": "DO_NOT_PUBLISH_OLD_RESOURCE_ID"},
+        "after": null,
+        "after_unknown": {}
+      }
+    }
+  ]
+}
