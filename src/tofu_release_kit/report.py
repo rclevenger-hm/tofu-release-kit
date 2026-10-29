@@ -123,7 +123,10 @@ def markdown(report):
         "| --- | --- |",
     ]
     for resource in report["plan"]["resources"]:
-        lines.append(f"| {cell(resource['address'])} | {cell(resource['action'])} |")
+        address = cell(resource["address"])
+        if "deposed" in resource:
+            address += f" (deposed {cell(resource['deposed'])})"
+        lines.append(f"| {address} | {cell(resource['action'])} |")
     lines += [
         "",
         "## Policy",

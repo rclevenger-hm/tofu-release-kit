@@ -20,6 +20,12 @@ cloud with restricted credentials. Resolve the provider/API issue, refresh throu
 a new plan, and review the resulting delta. Do not blindly retry the old saved plan
 or restore an old state file to undo resource changes.
 
+An interrupted create-before-destroy replacement can leave a deposed (old) object
+alongside the current object at the same resource address. Review each object in
+the new plan; reports label old objects with their deposed key. A cleanup deletion
+at a protected address still requires a separately reviewed exception. Do not
+remove the old object from state just to bypass policy or the recovery review.
+
 ## Apply succeeded, service failed
 
 Use the fixed reason (`status_mismatch`, `revision_mismatch`, `connection_error`,

@@ -12,6 +12,63 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CLITests(unittest.TestCase):
+    def test_inspect_recovery_plan_preserves_object_identity(self):
+        with (
+            tempfile.TemporaryDirectory() as temp,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            out = Path(temp) / "summary.json"
+            self.assertEqual(
+                main(
+                    [
+                        "inspect",
+                        "--config",
+                        str(ROOT / "examples/demo/release-kit.toml"),
+                        "--plan",
+                        str(ROOT / "tests/fixtures/deposed-recovery.json"),
+                        "--output",
+                        str(out),
+                    ]
+                ),
+                0,
+            )
+            result = json.loads(out.read_text())
+            self.assertEqual(result["counts"], {"delete": 1, "unchanged": 1})
+            self.assertEqual(result["resources"][0]["deposed"], "deadbeef")
+
+    @unittest.skipUnless(shutil.which("opa"), "OPA required")
+    def test_recovery_gate_and_report_keep_protected_deletions_blocked(self):
+        with (
+            tempfile.TemporaryDirectory() as temp,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            for command in ("gate", "report"):
+                with self.subTest(command=command):
+                    out = Path(temp) / (command + ".json")
+                    args = [
+                        command,
+                        "--config",
+                        str(ROOT / "examples/demo/release-kit.toml"),
+                        "--plan",
+                        str(ROOT / "tests/fixtures/deposed-recovery.json"),
+                        "--output",
+                        str(out),
+                    ]
+                    md = Path(temp) / "report.md"
+                    if command == "report":
+                        args += ["--markdown", str(md)]
+                    self.assertEqual(main(args), 1)
+                    result = json.loads(out.read_text())
+                    decision = result if command == "gate" else result["policy"]
+                    self.assertFalse(decision["allowed"])
+                    self.assertEqual(
+                        decision["findings"][0]["rule"], "protected-resource"
+                    )
+                    self.assertNotIn("DO_NOT_PUBLISH", out.read_text())
+                    if command == "report":
+                        self.assertEqual(result["status"], "blocked")
+                        self.assertIn("(deposed deadbeef)", md.read_text())
+
     def test_inspect_and_invalid_input_exit_codes(self):
         with (
             tempfile.TemporaryDirectory() as temp,

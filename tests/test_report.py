@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from helpers import config, plan
+from helpers import config, plan, recovery_plan
 
 from tofu_release_kit.io import KitError
 from tofu_release_kit.plan import summarize
@@ -68,6 +68,23 @@ class ReportTests(unittest.TestCase):
         result = markdown(report)
         self.assertNotIn("<script>", result)
         self.assertIn("&#124;", result)
+
+    def test_report_labels_and_escapes_deposed_objects(self):
+        data = recovery_plan()
+        data["resource_changes"][0]["change"]["actions"] = ["update"]
+        report = self.report()
+        report["plan"] = summarize(data)
+        result = markdown(report)
+        self.assertIn("| aws_dynamodb_table.orders | update |", result)
+        self.assertIn(
+            "| aws_dynamodb_table.orders (deposed deadbeef) | delete |", result
+        )
+        self.assertNotIn("DO_NOT_PUBLISH", result)
+        data["resource_changes"][1]["deposed"] = "<script>|\n`bad`"
+        report["plan"] = summarize(data)
+        result = markdown(report)
+        self.assertNotIn("<script>", result)
+        self.assertIn("(deposed &lt;script&gt;&#124; &#96;bad&#96;)", result)
 
     def test_foreign_environment_verification_rejected(self):
         checks = self.report("succeeded", True)["verification"]

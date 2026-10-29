@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from tofu_release_kit.config import validate_config
 
 
@@ -51,3 +54,9 @@ def outputs(url, revision="expected"):
         "health_url": {"sensitive": False, "value": url},
         "revision": {"sensitive": False, "value": revision},
     }
+
+
+def recovery_plan():
+    return json.loads(
+        (Path(__file__).parent / "fixtures/deposed-recovery.json").read_text()
+    )
