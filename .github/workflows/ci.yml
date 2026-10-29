@@ -48,7 +48,7 @@ jobs:
         run: make check
       - name: Build installable distributions
         run: |
-          python -m pip install 'setuptools==84.0.0'
+          python -m pip install 'setuptools==84.2.1'
           python -c "from setuptools.build_meta import build_sdist, build_wheel; build_sdist('dist'); build_wheel('dist')"
           python scripts/check_wheel.py
   opentofu:
