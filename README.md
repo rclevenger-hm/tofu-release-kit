@@ -78,6 +78,9 @@ a private runner-local plan file and Linux x86_64 with Python 3.11+ available.
   deadlines, bounded responses, verified TLS, and explicit failure reasons.
 - **Operational reporting:** separate policy rejection, partial apply failure,
   missing verification, failed verification, and verified deployment.
+- **Drift evidence:** distinguish observed managed-resource drift from proposed
+  changes, output-only changes, and planning errors without applying anything.
+  See the [drift runbook](docs/runbooks.md#drift) for private plan preparation.
 - **AWS reference delivery:** OIDC roles, state locking, an approval environment,
   encrypted plan transfer, deterministic Lambda packaging, and dependency readiness.
 

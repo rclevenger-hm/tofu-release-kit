@@ -7,6 +7,7 @@ import sys
 from . import __version__
 from .binding import bind, check_binding
 from .config import load_config
+from .drift import drift_report
 from .io import KitError, read_json, validate_output_paths, write_json, write_text
 from .plan import summarize
 from .policy import evaluate
@@ -18,6 +19,11 @@ def parser():
     root = argparse.ArgumentParser(description=__doc__)
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
+    drift = commands.add_parser("drift", help="Report observed drift without applying")
+    drift.add_argument("--config", required=True)
+    drift.add_argument("--output", required=True)
+    drift.add_argument("--plan", help="Private JSON from the same successful plan run")
+    drift.add_argument("--plan-exit-code", type=int, choices=(0, 1, 2), required=True)
     for name in ("inspect", "gate", "verify", "report"):
         command = commands.add_parser(name)
         command.add_argument("--config", required=True)
@@ -80,7 +86,20 @@ def run(args):
     if getattr(args, "markdown", None) is not None:
         outputs.append(args.markdown)
     validate_output_paths(inputs, outputs)
-    if args.command in ("bind", "check-binding"):
+    if args.command == "drift":
+        if args.plan_exit_code == 1 and args.plan is not None:
+            raise KitError("Do not supply a saved plan after a failed planning run")
+        result = drift_report(
+            load_config(args.config),
+            args.plan_exit_code,
+            read_json(args.plan) if args.plan else None,
+        )
+        code = (
+            2
+            if result["status"] == "plan_error"
+            else int(result["status"] != "no_changes")
+        )
+    elif args.command in ("bind", "check-binding"):
         config = load_config(args.config)
         if config["environment"] != args.environment:
             raise KitError("Binding environment must match configuration")
