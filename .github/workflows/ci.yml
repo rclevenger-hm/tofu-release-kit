@@ -70,6 +70,7 @@ jobs:
           tofu -chdir=examples/aws-serverless validate
           tofu -chdir=examples/aws-serverless test
           python scripts/check_local_lab.py
+          PYTHONPATH=src python -m unittest discover -s tests -p test_drift.py -v
   container:
     runs-on: ubuntu-latest
     steps:

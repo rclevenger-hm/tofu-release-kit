@@ -57,6 +57,7 @@ Run `tofu-release-kit COMMAND --help` for complete arguments.
 | check-binding | Manifest and current deployment inputs | Valid result or nonzero failure |
 | verify | Config and OpenTofu outputs JSON | Required service check results |
 | report | Plan, config, apply status, optional verification | Deployment JSON and optional Markdown |
+| drift | Config, detailed plan exit code, successful plan JSON | Managed-resource drift JSON; no apply or policy evaluation |
 
 All commands require `--output`. Existing files at that destination are replaced
 atomically with private permissions. Output paths must be distinct from every
@@ -84,3 +85,28 @@ an old object's deletion is not exempt. Resource attribute values remain omitted
 account inputs. Use byte-identical canonical JSON for repeatable hashes. It is
 mandatory in the supplied AWS workflow. Binding timestamps are real execution
 times and are unrelated to synthetic initial repository commit dates.
+
+## Drift reports
+
+`drift --plan-exit-code CODE` records the original OpenTofu detailed exit code:
+0 means no proposed changes, 1 means planning failed, and 2 means changes were
+reported. Codes 0 and 2 require `--plan` from that same successful run. Code 1
+requires omitting `--plan` and produces a `plan_error` report with unknown drift,
+rather than reading a stale plan left by an earlier run.
+
+The toolkit keeps its own exit convention: 0 for `no_changes`, 1 for
+`drift_detected` or `changes_detected`, and 2 for `plan_error` or invalid input.
+These are intentionally different from OpenTofu's codes.
+
+Only managed entries in `resource_drift` count as observed resource drift.
+`resource_changes` describes proposed changes and is not evidence of remote drift.
+An exit-2 plan with no observed managed drift remains `changes_detected`, including
+output-only or unclassified changes. A normal plan can observe ignored drift while
+proposing no changes; that report still fails the drift check even with plan code 0.
+Code 0 with proposed resource or output changes is rejected as inconsistent input.
+
+Reports include allowlisted resource addresses, types, actions, optional deposed
+keys, and a count of changed outputs. They omit attribute values, output names and
+values, variables, and diagnostics. Resource addresses can still be sensitive.
+Keep reports private and review them before sharing. A failed invocation does not
+make an existing report at the output path current or trustworthy.
